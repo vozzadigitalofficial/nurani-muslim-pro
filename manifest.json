@@ -1,0 +1,25 @@
+{
+  "name": "NURANI - Muslim Companion",
+  "short_name": "NURANI",
+  "description": "Jadwal Salat Akurat & Al-Quran Digital (Sovereign Edition)",
+  "id": "/nurani-app-v4",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

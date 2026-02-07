@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    
+    <title>NURANI - Sahabat Ibadah Digital</title>
+    <meta name="description" content="Jadwal Salat Akurat Kemenag, Al-Qur'an Streaming & Tasbih Digital. Ringan, Tanpa Iklan, & Bisa Offline.">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vozzadigitalofficial.github.io/nurani-muslim-digital/">
+    <meta property="og:title" content="NURANI - Aplikasi Ibadah Profesional">
+    <meta property="og:description" content="Teman setia ibadahmu. Jadwal Salat presisi, Murottal 30 Juz, dan Tasbih Digital dalam satu genggaman.">
+    <meta property="og:image" content="https://vozzadigitalofficial.github.io/nurani-muslim-digital/logo.jpg">
+
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vozzadigitalofficial.github.io/nurani-muslim-digital/">
+    <meta property="twitter:title" content="NURANI - Aplikasi Ibadah Profesional">
+    <meta property="twitter:description" content="Teman setia ibadahmu. Jadwal Salat presisi, Murottal 30 Juz, dan Tasbih Digital.">
+    <meta property="twitter:image" content="https://vozzadigitalofficial.github.io/nurani-muslim-digital/logo.jpg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root { --v-gold: #d97706; --v-deep: #020617; --v-glass: rgba(15, 23, 42, 0.96); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--v-deep); color: #f1f5f9; -webkit-tap-highlight-color: transparent; overflow: hidden; height: 100vh; user-select: none; }
+        
+        .v-glass { background: var(--v-glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 1.5rem; }
+        .v-nav { background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: env(safe-area-inset-bottom); }
+        
+        .panel { display: none; height: 100%; animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .panel.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Audio Visualizer */
+        .bars { display: flex; justify-content: center; align-items: flex-end; height: 12px; width: 15px; gap: 2px; }
+        .bar { width: 3px; background-color: #d97706; animation: sound 0s -0.4s linear infinite alternate; }
+        .playing .bar { animation-duration: 0.4s; }
+        @keyframes sound { 0% { height: 2px; opacity: .5; } 100% { height: 100%; opacity: 1; } }
+
+        #audio-player { transform: translateY(150%); transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        #audio-player.show { transform: translateY(0); }
+    </style>
+</head>
+<body class="max-w-md mx-auto flex flex-col relative h-full">
+
+    <div id="splash" class="fixed inset-0 z-[100] bg-[#020617] flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="w-16 h-16 border-4 border-amber-600/30 border-t-amber-600 rounded-full animate-spin mb-4"></div>
+        <p class="text-[10px] tracking-[0.4em] text-amber-500 font-bold uppercase animate-pulse">Memuat Data...</p>
+    </div>
+
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[90] bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl border border-slate-700 flex items-center gap-3 transition-all duration-300 opacity-0 -translate-y-10 pointer-events-none w-max max-w-[90%]">
+        <i class="fa-solid fa-circle-info text-amber-500"></i>
+        <span id="toast-msg" class="text-xs font-bold truncate">Notifikasi</span>
+    </div>
+
+    <header class="pt-12 pb-4 px-6 text-center shrink-0 z-10">
+        <div class="flex justify-between items-start mb-6">
+            <div class="text-left">
+                <div id="txt-hijri" class="text-amber-500 font-bold text-[10px] tracking-widest uppercase mb-1">-- ---- ---- H</div>
+                <div id="loc-area" class="flex items-center gap-2 text-slate-400 cursor-pointer active:scale-95 transition-transform" onclick="app.toggleSearch()">
+                    <i class="fa-solid fa-location-dot text-xs"></i>
+                    <span id="loc-name" class="text-[10px] font-bold uppercase tracking-widest underline decoration-dotted decoration-slate-600">PILIH LOKASI</span>
+                </div>
+            </div>
+            <div class="text-right">
+                 <div id="txt-countdown" class="text-white font-black text-xl leading-none">--</div>
+                 <div class="text-[8px] text-slate-500 uppercase tracking-widest font-bold">Menuju Salat</div>
+            </div>
+        </div>
+        <div id="txt-clock" class="text-[4.5rem] font-light tracking-tighter text-white leading-none font-sans">00:00</div>
+        
+        <div id="search-box" class="hidden absolute top-24 left-6 right-6 bg-slate-800 p-4 rounded-2xl shadow-xl border border-slate-700 z-50">
+            <input type="text" id="search-input" placeholder="Cari Kota (Min 3 huruf)..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500 mb-2">
+            <button onclick="app.searchCity()" class="w-full bg-amber-600 text-white text-xs font-bold py-2 rounded-lg mb-2 active:bg-amber-700">CARI</button>
+            <div id="search-results" class="max-h-40 overflow-y-auto space-y-1 scrollbar-thin scrollbar-thumb-slate-600"></div>
+            <button onclick="app.toggleSearch()" class="text-[10px] text-slate-500 mt-2 uppercase w-full py-2">Tutup</button>
+        </div>
+    </header>
+
+    <main class="flex-grow px-4 pb-32 overflow-y-auto no-scrollbar relative">
+        
+        <div id="tab-home" class="panel active">
+            <div class="v-glass p-6 space-y-4">
+                <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-5 rounded-2xl border border-white/5 relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i class="fa-solid fa-kaaba text-6xl text-white"></i></div>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Jadwal Hari Ini</p>
+                    <div id="home-schedule-list" class="space-y-2 mt-4">
+                        <div class="animate-pulse flex space-x-4"><div class="h-4 bg-slate-700 rounded w-3/4"></div></div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="app.nav('quran')" class="p-4 bg-amber-600 rounded-2xl text-white shadow-lg shadow-amber-900/20 active:scale-95 transition-transform flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-book-quran text-xl"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Al-Qur'an</span>
+                    </button>
+                    <button onclick="app.nav('tasbih')" class="p-4 bg-slate-800 rounded-2xl text-slate-200 border border-slate-700 active:scale-95 transition-transform flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-fingerprint text-xl"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest">Tasbih</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-quran" class="panel">
+            <div class="mb-4 sticky top-0 z-20 bg-[#020617]/90 backdrop-blur pb-2">
+                <input type="text" placeholder="Cari Surat (Latin)..." onkeyup="quranApp.filter(this.value)" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-amber-600 transition-colors">
+            </div>
+            <div id="quran-list" class="space-y-2 pb-24 min-h-[300px]"></div>
+        </div>
+
+        <div id="tab-tasbih" class="panel">
+            <div class="v-glass p-8 text-center h-[450px] flex flex-col justify-between items-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-amber-600/5 z-0"></div>
+                <div class="z-10 w-full">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-4">Hitungan Dzikir</p>
+                    <div id="tasbih-val" class="text-[6rem] font-thin text-white leading-none">0</div>
+                </div>
+                <button onclick="app.hitTasbih()" class="z-10 w-32 h-32 rounded-full bg-gradient-to-b from-slate-700 to-slate-800 border-4 border-slate-600 shadow-2xl active:scale-90 transition-transform flex items-center justify-center group">
+                    <i class="fa-solid fa-hand-pointer text-4xl text-amber-500/50 group-active:text-amber-400 transition-colors"></i>
+                </button>
+                <button onclick="app.resetTasbih()" class="z-10 text-[10px] text-red-400 font-bold uppercase tracking-widest bg-red-900/10 border border-red-900/30 px-6 py-2 rounded-full active:bg-red-900/30"><i class="fa-solid fa-rotate-right mr-1"></i> Reset</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="audio-player" class="fixed bottom-24 left-4 right-4 bg-slate-900/95 backdrop-blur-xl border border-amber-600/30 rounded-2xl p-3 shadow-2xl z-50 flex items-center justify-between">
+        <div class="flex items-center gap-3 overflow-hidden">
+            <div id="player-cover" class="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                <div class="bars playing"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+            </div>
+            <div class="min-w-0">
+                <p id="player-title" class="text-xs font-bold text-white truncate">Memuat...</p>
+                <p class="text-[9px] text-amber-500 font-bold uppercase tracking-wide">Murottal</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+             <button onclick="quranApp.stop()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white bg-white/5 rounded-full"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 v-nav px-8 py-4 flex justify-between items-center z-40">
+        <button onclick="app.nav('home')" id="n-home" class="flex flex-col items-center gap-1 text-amber-500 w-16 transition-all active:scale-90">
+            <i class="fa-solid fa-mosque text-xl"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Home</span>
+        </button>
+        <button onclick="app.nav('quran')" id="n-quran" class="flex flex-col items-center gap-1 text-slate-500 w-16 transition-all active:scale-90">
+            <i class="fa-solid fa-book-open text-xl"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Quran</span>
+        </button>
+        <button onclick="app.nav('tasbih')" id="n-tasbih" class="flex flex-col items-center gap-1 text-slate-500 w-16 transition-all active:scale-90">
+            <i class="fa-solid fa-ring text-xl"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Tasbih</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- CONFIG & STATE ---
+        const CONFIG = {
+            apiBase: 'https://api.myquran.com/v3',
+            defaultCityId: '1301', // JAKARTA PUSAT
+            defaultCityName: 'JAKARTA PUSAT'
+        };
+
+        const app = {
+            state: {
+                cityId: localStorage.getItem('nurani_city_id') || CONFIG.defaultCityId,
+                cityName: localStorage.getItem('nurani_city_name') || CONFIG.defaultCityName,
+                prayers: {},
+                tasbih: parseInt(localStorage.getItem('nurani_tasbih') || 0)
+            },
+
+            init: async function() {
+                this.updateClock();
+                this.renderTasbih();
+                document.getElementById('loc-name').innerText = this.state.cityName;
+                
+                // Optimistic Load (Load saved data first)
+                const savedSchedule = localStorage.getItem('nurani_last_schedule');
+                const savedDate = localStorage.getItem('nurani_schedule_date');
+                const today = new Date().toISOString().split('T')[0];
+
+                if(savedSchedule && savedDate === today) {
+                    this.state.prayers = JSON.parse(savedSchedule);
+                    this.renderSchedule();
+                }
+
+                await Promise.all([this.fetchSchedule(), this.fetchHijri()]);
+                
+                setTimeout(() => document.getElementById('splash').style.opacity = 0, 800);
+                setTimeout(() => document.getElementById('splash').remove(), 1500);
+                
+                setInterval(() => this.updateClock(), 1000);
+            },
+
+            fetchSchedule: async function() {
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Offline Logic
+                if (!navigator.onLine && !this.state.prayers.Subuh) {
+                     const anySaved = localStorage.getItem('nurani_last_schedule');
+                     if(anySaved) {
+                        this.state.prayers = JSON.parse(anySaved);
+                        this.renderSchedule();
+                        this.toast("Mode Offline: Menggunakan Data Tersimpan");
+                        return;
+                     }
+                }
+
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                    const res = await fetch(`${CONFIG.apiBase}/sholat/jadwal/${this.state.cityId}/${today}`, {
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+
+                    if (!res.ok) throw new Error("Server Error");
+
+                    const json = await res.json();
+                    
+                    if(json.status && json.data && json.data.jadwal) {
+                        const jadwal = json.data.jadwal;
+                        this.state.prayers = {
+                            "Subuh": jadwal.subuh,
+                            "Dzuhur": jadwal.dzuhur,
+                            "Ashar": jadwal.ashar,
+                            "Maghrib": jadwal.maghrib,
+                            "Isya": jadwal.isya
+                        };
+                        this.renderSchedule();
+                        
+                        localStorage.setItem('nurani_last_schedule', JSON.stringify(this.state.prayers));
+                        localStorage.setItem('nurani_schedule_date', today);
+                    }
+                } catch(e) { 
+                    console.warn("API Error", e);
+                    const saved = localStorage.getItem('nurani_last_schedule');
+                    if(saved) {
+                        this.state.prayers = JSON.parse(saved);
+                        this.renderSchedule();
+                        this.toast("Koneksi tidak stabil, memuat data offline");
+                    } else {
+                        if(e.name === 'AbortError') this.toast("Koneksi Lambat");
+                        else this.toast("Gagal memuat jadwal");
+                    }
+                }
+            },
+
+            fetchHijri: async function() {
+                try {
+                    const res = await fetch(`${CONFIG.apiBase}/cal/today`);
+                    const json = await res.json();
+                    if(json.status && json.data.hijr) {
+                        const h = json.data.hijr;
+                        const mName = ["Muharram","Safar","Rabiul Awal","Rabiul Akhir","Jumadil Awal","Jumadil Akhir","Rajab","Sya'ban","Ramadhan","Syawal","Zulqaidah","Zulhijjah"];
+                        document.getElementById('txt-hijri').innerText = `${h.day} ${mName[h.month - 1]} ${h.year} H`.toUpperCase();
+                    }
+                } catch(e) {}
+            },
+
+            searchCity: async function() {
+                const query = document.getElementById('search-input').value;
+                if(query.length < 3) return this.toast("Minimal 3 huruf");
+                
+                const list = document.getElementById('search-results');
+                list.innerHTML = '<div class="text-xs text-slate-500 p-2">Mencari...</div>';
+                
+                try {
+                    const res = await fetch(`${CONFIG.apiBase}/sholat/kabkota/cari/${query}`);
+                    const json = await res.json();
+                    list.innerHTML = '';
+
+                    if(json.status && json.data) {
+                        const results = Array.isArray(json.data) ? json.data : [json.data];
+                        results.forEach(city => {
+                            const item = document.createElement('div');
+                            item.className = "p-3 bg-slate-900 border-b border-white/5 text-xs text-slate-300 cursor-pointer hover:bg-slate-700 rounded transition-colors";
+                            item.innerText = city.lokasi;
+                            item.onclick = () => this.setCity(city.id, city.lokasi);
+                            list.appendChild(item);
+                        });
+                    } else {
+                        list.innerHTML = '<div class="p-2 text-xs text-red-400">Kota tidak ditemukan</div>';
+                    }
+                } catch(e) {
+                    list.innerHTML = '<div class="p-2 text-xs text-red-400">Gagal koneksi server</div>';
+                }
+            },
+
+            setCity: function(id, name) {
+                this.state.cityId = id;
+                this.state.cityName = name;
+                localStorage.setItem('nurani_city_id', id);
+                localStorage.setItem('nurani_city_name', name);
+                
+                document.getElementById('loc-name').innerText = name;
+                this.toggleSearch();
+                this.toast("Lokasi diperbarui");
+                this.fetchSchedule();
+            },
+
+            toggleSearch: function() {
+                const box = document.getElementById('search-box');
+                box.classList.toggle('hidden');
+                if(!box.classList.contains('hidden')) document.getElementById('search-input').focus();
+            },
+
+            renderSchedule: function() {
+                const container = document.getElementById('home-schedule-list');
+                container.innerHTML = '';
+                const now = new Date();
+                let nextFound = false;
+                const order = ["Subuh", "Dzuhur", "Ashar", "Maghrib", "Isya"];
+
+                order.forEach(name => {
+                    const time = this.state.prayers[name];
+                    if(!time) return;
+
+                    const [h, m] = time.split(':');
+                    const pTime = new Date(); pTime.setHours(h, m, 0);
+                    
+                    let isNext = false;
+                    if(!nextFound && pTime > now) {
+                        isNext = true; nextFound = true;
+                        const diffMs = pTime - now;
+                        const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
+                        const diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
+                        document.getElementById('txt-countdown').innerText = `${diffHrs}j ${diffMins}m`;
+                    }
+
+                    const activeClass = isNext ? "bg-amber-600 border-amber-500 text-white shadow-lg transform scale-[1.02]" : "bg-white/5 border-white/5 text-slate-400";
+                    
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center px-4 py-3 rounded-xl border transition-all duration-500 ${activeClass}">
+                            <span class="text-xs font-bold uppercase tracking-widest">${name}</span>
+                            <span class="text-lg font-black tracking-tighter">${time}</span>
+                        </div>`;
+                });
+                
+                if(!nextFound) document.getElementById('txt-countdown').innerText = "Besok";
+            },
+
+            updateClock: function() {
+                const n = new Date();
+                document.getElementById('txt-clock').innerText = n.toLocaleTimeString('id-ID', {hour12:false, hour:'2-digit', minute:'2-digit'});
+            },
+
+            hitTasbih: function() {
+                this.state.tasbih++;
+                this.renderTasbih();
+                localStorage.setItem('nurani_tasbih', this.state.tasbih);
+                if(navigator.vibrate) navigator.vibrate(30);
+            },
+            resetTasbih: function() {
+                if(confirm("Reset hitungan?")) {
+                    this.state.tasbih = 0;
+                    this.renderTasbih();
+                    localStorage.setItem('nurani_tasbih', 0);
+                }
+            },
+            renderTasbih: function() {
+                document.getElementById('tasbih-val').innerText = this.state.tasbih;
+            },
+
+            nav: function(page) {
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                document.getElementById('tab-'+page).classList.add('active');
+                
+                ['home','quran','tasbih'].forEach(id => {
+                    const btn = document.getElementById('n-'+id);
+                    if(id === page) {
+                        btn.classList.add('text-amber-500'); btn.classList.remove('text-slate-500');
+                    } else {
+                        btn.classList.remove('text-amber-500'); btn.classList.add('text-slate-500');
+                    }
+                });
+                
+                if(page === 'quran') quranApp.load();
+            },
+
+            toast: function(msg) {
+                const t = document.getElementById('toast');
+                document.getElementById('toast-msg').innerText = msg;
+                t.style.opacity = 1; t.style.transform = 'translate(-50%, 0)';
+                setTimeout(() => { t.style.opacity = 0; t.style.transform = 'translate(-50%, -40px)'; }, 3000);
+            }
+        };
+
+        const quranApp = {
+            data: [],
+            loaded: false,
+            audio: null,
+            currentSurah: null,
+
+            load: async function() {
+                if(this.loaded) return;
+                const container = document.getElementById('quran-list');
+                container.innerHTML = '<div class="text-center py-10"><i class="fa-solid fa-circle-notch fa-spin text-amber-600 text-2xl"></i><p class="text-[10px] mt-2 text-slate-500">Memuat Daftar Surat...</p></div>';
+                
+                try {
+                    const res = await fetch(`${CONFIG.apiBase}/quran`);
+                    const json = await res.json();
+                    if(json.status && json.data) {
+                        this.data = json.data;
+                        this.render(this.data);
+                        this.loaded = true;
+                    }
+                } catch(e) {
+                    container.innerHTML = '<div class="text-center text-red-400 text-xs py-10">Gagal memuat Quran. Cek koneksi internet.</div>';
+                }
+            },
+
+            render: function(list) {
+                const container = document.getElementById('quran-list');
+                container.innerHTML = '';
+                
+                list.forEach(s => {
+                    const isActive = this.currentSurah === s.number;
+                    const item = document.createElement('div');
+                    item.className = `flex items-center gap-4 p-3 rounded-xl border ${isActive ? 'bg-amber-900/20 border-amber-600/50' : 'bg-white/5 border-white/5'} hover:bg-slate-800 cursor-pointer transition-all mb-2`;
+                    item.onclick = () => this.play(s);
+                    item.innerHTML = `
+                        <div class="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400">
+                            ${isActive ? '<i class="fa-solid fa-volume-high text-amber-500 animate-pulse"></i>' : s.number}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-slate-200">${s.name_latin}</h4>
+                            <p class="text-[10px] text-slate-500 uppercase">${s.translation} • ${s.number_of_ayahs} Ayat</p>
+                        </div>
+                        <div class="text-amber-600/50 font-serif text-lg">${s.name}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            },
+
+            play: function(surah) {
+                if(this.audio) { this.audio.pause(); }
+                if(this.currentSurah === surah.number) {
+                    this.stop(); return; // Toggle Stop
+                }
+
+                this.currentSurah = surah.number;
+                this.audio = new Audio(surah.audio_url);
+                this.audio.play().catch(e => app.toast("Gagal memutar audio"));
+                
+                this.render(this.data);
+                
+                const player = document.getElementById('audio-player');
+                player.classList.add('show');
+                document.getElementById('player-title').innerText = surah.name_latin;
+
+                this.audio.onended = () => this.stop();
+            },
+
+            stop: function() {
+                if(this.audio) { this.audio.pause(); this.audio = null; }
+                this.currentSurah = null;
+                document.getElementById('audio-player').classList.remove('show');
+                this.render(this.data);
+            },
+
+            filter: function(keyword) {
+                const k = keyword.toLowerCase();
+                const filtered = this.data.filter(s => 
+                    s.name_latin.toLowerCase().includes(k) || 
+                    s.translation.toLowerCase().includes(k)
+                );
+                this.render(filtered);
+            }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
